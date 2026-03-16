@@ -7,7 +7,7 @@ import {
   type CellValueChangedEvent,
 } from 'ag-grid-community';
 import {
-  ArrowLeft, Plus, Save, Trash2, X,
+  ArrowLeft, Plus, Save, Trash2, X, Printer, FileDown, FileUp,
 } from 'lucide-react';
 import {
   DETAIL_TABLE_MAP,
@@ -20,6 +20,9 @@ import {
   useUpdateDetail,
   useDeleteDetail,
 } from '../hooks/use-detail';
+import { exportDetailTable, readExcelFile } from '../lib/excel';
+import { printByType } from '../lib/print-label';
+import { api } from '../lib/api';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -31,12 +34,14 @@ export default function DetailPage() {
   const managementId = Number(id);
   const poleType = Number(searchParams.get('type') || '0');
   const clientName = searchParams.get('name') || '';
+  const website = searchParams.get('web') || '';
 
   const table = DETAIL_TABLE_MAP[poleType] || 'detail_jju';
   const columns = DETAIL_COLUMNS_MAP[poleType] || [];
   const typeLabel = POLE_TYPE_LABELS[poleType] || '';
 
   const gridRef = useRef<AgGridReact>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Map<number, Record<string, any>>>(new Map());
 
@@ -99,6 +104,46 @@ export default function DetailPage() {
     }
   }, []);
 
+  // Excel 내보내기
+  const handleExport = useCallback(() => {
+    exportDetailTable(rows, typeLabel, clientName);
+  }, [rows, typeLabel, clientName]);
+
+  // Excel 가져오기
+  const handleImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const importedRows = await readExcelFile(file);
+      let num = rows.length > 0
+        ? Math.max(...rows.map((r: any) => r.number || 0)) + 1
+        : 1;
+
+      for (const row of importedRows) {
+        await api.post(`/detail/${table}`, {
+          management_id: managementId,
+          number: num++,
+          sort_order: num,
+          ...row,
+        });
+      }
+
+      alert(`${importedRows.length}건 가져오기 완료`);
+      refetch();
+    } catch (err: any) {
+      alert('가져오기 실패: ' + err.message);
+    }
+
+    // 같은 파일 다시 선택 가능하게
+    e.target.value = '';
+  }, [rows, table, managementId, refetch]);
+
+  // 라벨 인쇄
+  const handlePrint = useCallback(() => {
+    printByType(poleType, rows, { clientName, website });
+  }, [poleType, rows, clientName, website]);
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -152,6 +197,40 @@ export default function DetailPage() {
           삭제
         </button>
 
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+
+        {/* 인쇄 */}
+        <button
+          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700"
+          onClick={handlePrint}
+        >
+          <Printer size={16} />
+          인쇄
+        </button>
+
+        {/* Excel */}
+        <button
+          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700"
+          onClick={handleExport}
+        >
+          <FileDown size={16} />
+          엑셀 내보내기
+        </button>
+        <button
+          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <FileUp size={16} />
+          엑셀 가져오기
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          className="hidden"
+          onChange={handleImport}
+        />
+
         <div className="flex-1" />
         <span className="text-sm text-gray-500">총 {rows.length}건</span>
       </div>
@@ -179,7 +258,7 @@ export default function DetailPage() {
 
       {/* Status */}
       <div className="h-7 bg-gray-100 border-t border-gray-300 flex items-center px-3 text-xs text-gray-600 shrink-0">
-        <span>셀을 클릭하여 직접 편집할 수 있습니다. 편집 후 저장 버튼을 눌러주세요.</span>
+        <span>셀 클릭→편집 | 인쇄→PDF 미리보기(QR코드 포함) | 엑셀 가져오기→xlsx 파일 선택</span>
       </div>
     </div>
   );

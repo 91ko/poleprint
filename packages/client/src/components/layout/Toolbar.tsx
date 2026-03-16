@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Plus, Save, X, Trash2, RefreshCw, Search,
+  Plus, Save, X, Trash2, RefreshCw, Search, FileDown,
 } from 'lucide-react';
 
 const POLE_TYPES = [
@@ -21,11 +21,12 @@ interface ToolbarProps {
   onDelete: () => void;
   onRefresh: () => void;
   onSearch: (term: string) => void;
+  onExport?: () => void;
   hasChanges: boolean;
 }
 
 export default function Toolbar({
-  onNew, onSave, onCancel, onDelete, onRefresh, onSearch, hasChanges,
+  onNew, onSave, onCancel, onDelete, onRefresh, onSearch, onExport, hasChanges,
 }: ToolbarProps) {
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,20 +43,23 @@ export default function Toolbar({
           신규
         </button>
         {showNewMenu && (
-          <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-[140px]">
-            {POLE_TYPES.map((pt) => (
-              <button
-                key={pt.value}
-                className="block w-full text-left px-3 py-1.5 text-sm hover:bg-blue-50"
-                onClick={() => {
-                  onNew(pt.value);
-                  setShowNewMenu(false);
-                }}
-              >
-                {pt.label}
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowNewMenu(false)} />
+            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-[140px]">
+              {POLE_TYPES.map((pt) => (
+                <button
+                  key={pt.value}
+                  className="block w-full text-left px-3 py-1.5 text-sm hover:bg-blue-50"
+                  onClick={() => {
+                    onNew(pt.value);
+                    setShowNewMenu(false);
+                  }}
+                >
+                  {pt.label}
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -94,6 +98,19 @@ export default function Toolbar({
       >
         <RefreshCw size={16} />
       </button>
+
+      {onExport && (
+        <>
+          <div className="w-px h-6 bg-gray-300 mx-1" />
+          <button
+            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700"
+            onClick={onExport}
+          >
+            <FileDown size={16} />
+            엑셀
+          </button>
+        </>
+      )}
 
       <div className="flex-1" />
 

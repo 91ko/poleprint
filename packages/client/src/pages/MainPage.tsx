@@ -11,6 +11,7 @@ import {
   useDeleteMainTable,
   type MainTableRow,
 } from '../hooks/use-main-table';
+import { exportMainTable } from '../lib/excel';
 
 export default function MainPage() {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ export default function MainPage() {
   }, [selectedRow, deleteMutation]);
 
   const handleRowDoubleClick = useCallback((row: MainTableRow) => {
-    navigate(`/detail/${row.id}?type=${row.poleType}&name=${encodeURIComponent(row.clientName)}`);
+    navigate(`/detail/${row.id}?type=${row.poleType}&name=${encodeURIComponent(row.clientName)}&web=${encodeURIComponent(row.website || '')}`);
   }, [navigate]);
 
   return (
@@ -97,6 +98,7 @@ export default function MainPage() {
           refetch();
         }}
         onSearch={setSearch}
+        onExport={() => exportMainTable(rows)}
         hasChanges={hasChanges}
       />
 
