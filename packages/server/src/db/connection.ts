@@ -14,11 +14,14 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'poleprint',
   waitForConnections: true,
   connectionLimit: 10,
-  charset: 'utf8mb4',
+  charset: 'UTF8MB4_UNICODE_CI',
 });
 
 export async function initDatabase(): Promise<void> {
   const __dirname = dirname(fileURLToPath(import.meta.url));
+
+  // Ensure UTF-8 on connection
+  await pool.execute("SET NAMES 'utf8mb4'");
 
   // Create database if not exists
   const tempPool = mysql.createPool({
@@ -26,7 +29,7 @@ export async function initDatabase(): Promise<void> {
     port: parseInt(process.env.DB_PORT || '3306'),
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    charset: 'utf8mb4',
+    charset: 'UTF8MB4_UNICODE_CI',
   });
 
   await tempPool.execute(

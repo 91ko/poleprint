@@ -20,6 +20,10 @@ router.get('/:table/:managementId', async (req: Request, res: Response) => {
 router.post('/:table', async (req: Request, res: Response) => {
   try {
     const row = await detailService.create(req.params.table, req.body);
+    // Update total_qty in main_table
+    if (req.body.management_id) {
+      await detailService.updateTotalQty(req.body.management_id, req.params.table);
+    }
     res.status(201).json(row);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -44,11 +48,17 @@ router.put('/:table/:rowid', async (req: Request, res: Response) => {
 // DELETE /api/detail/:table/:rowid
 router.delete('/:table/:rowid', async (req: Request, res: Response) => {
   try {
+    // Get management_id before deleting
+    const row = await detailService.findOne(req.params.table, Number(req.params.rowid));
     const deleted = await detailService.remove(
       req.params.table,
       Number(req.params.rowid)
     );
     if (!deleted) return res.status(404).json({ error: 'Not found' });
+    // Update total_qty
+    if (row?.management_id) {
+      await detailService.updateTotalQty(row.management_id, req.params.table);
+    }
     res.json({ success: true });
   } catch (err: any) {
     res.status(400).json({ error: err.message });

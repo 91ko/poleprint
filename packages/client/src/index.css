@@ -11,3 +11,21 @@ html, body, #root {
 body {
   font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
 }
+
+/* AG Grid - 셀 텍스트 잘림 방지 */
+.ag-theme-alpine .ag-cell {
+  line-height: 28px !important;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+.ag-theme-alpine .ag-header-cell-label {
+  font-weight: 600;
+}
+
+.ag-theme-alpine .ag-row {
+  font-size: 13px;
+}

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AgGridReact } from 'ag-grid-react';
 import Toolbar from '../components/layout/Toolbar';
 import StatusBar from '../components/layout/StatusBar';
@@ -12,6 +13,7 @@ import {
 } from '../hooks/use-main-table';
 
 export default function MainPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [selectedRow, setSelectedRow] = useState<MainTableRow | null>(null);
   const [pendingChanges, setPendingChanges] = useState<
@@ -75,9 +77,8 @@ export default function MainPage() {
   }, [selectedRow, deleteMutation]);
 
   const handleRowDoubleClick = useCallback((row: MainTableRow) => {
-    // TODO: Phase 2 - open detail form based on poleType
-    alert(`세부내역 열기: ID ${row.id} (${row.clientName}) - 준비 중`);
-  }, []);
+    navigate(`/detail/${row.id}?type=${row.poleType}&name=${encodeURIComponent(row.clientName)}`);
+  }, [navigate]);
 
   return (
     <div className="h-full flex flex-col">
